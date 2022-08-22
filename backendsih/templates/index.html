@@ -14,66 +14,27 @@
 <body>
 
 
-<h1>Image Classification App</h1>
-<p>A simple Django web app with a pretrained PyTorch DenseNet model will try to classify the selected image according to ImageNet labels. Uploaded images are not saved.</p>
+    <h2>Uplaod Image for Classification</h2>
 
-<form method="post" enctype="multipart/form-data" style="margin-top: 50px; margin-bottom: 30px;">
+    
+    <br>
+   
+    <form method="post" enctype="multipart/form-data" action="">
+  
     {% csrf_token %}
-    {% comment %} {{ form }} {% endcomment %}
-    {% comment %} <button type="submit" id="btnUpload" class="btn btn-primary">Upload</button> {% endcomment %}
-
-
     <div class="col-md-4 col-sm-4"><label for="fname">Upload Image File Here:</label> </div> <input name="filePath" type="file"><br><br>
     <br>
 
+    
+    <input type="submit" value="Submit" ></div>
 
-<input type="submit" value="Submit" ></div>
+    <h2>The classification of the image is {{predictedLabel}}</h2>
+    <img src={{filePathName}} alt='imagename'>
+    {{filePathName}}
 
-{% comment %} <h2>The classification of the image is {{predictedLabel}}</h2> {% endcomment %}
-<img src={{filePathName}} alt='imagename'>
-
-<br>
-{{filePathName}} 
-    {{centers}}
+    </form>
+    <br>
     <a href="/logout">Logout</a>
 </form>
-
-
-{% comment %} {% if image_uri is not None %}
-    {% if predicted_label is not None %}
-        <div class="alert alert-primary" role="alert">
-            Predicted label: <b>{{ predicted_label }}</b>
-        </div>
-    {% else %}
-        <div class="alert alert-danger" role="alert">
-            Prediction error. No label predicted.
-        </div>
-    {% endif %}
-
-    <img src="{{ image_uri }}" class="img-fluid" alt="Uploaded image"
-         style="max-width: min(500px, 100%); height: auto; margin-top: 30px;">
-    {%if image_uri2 is not None%}
-        <img src="{{ image_uri2 }}" class="img-fluid" alt="Uploaded image"
-        style="max-width: min(500px, 100%); height: auto; margin-top: 30px;">
-    {%endif%}
-{% else %}
-        <p>checking</p>
-{%endif%} {% endcomment %}
-
-{# spinner inside the submit button when uploading and classifying an image #}
-{# from https://stackoverflow.com/a/54533740/2745116 #}
-{# strange: works on Firefox but on Chrome, keeps spinning forever #}
-{#<script>#}
-{#    $(document).ready(function() {#}
-{#        $("#btnUpload").click(function() {#}
-{#            // disable button#}
-{#            $(this).prop("disabled", true);#}
-{#            // add spinner to button#}
-            {#$(this).html(#}
-            {#    `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...`#}
-            {#);#}
-{#        });#}
-{#    });#}
-{#</script>#}
 </body>
 </html>
