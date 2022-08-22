@@ -56,7 +56,6 @@ def logout(request):
     return redirect('/')
 
 def index(request):
-
     if request.method == 'POST':
         form = ImageUploadForm(request.POST, request.FILES)
         if form.is_valid():

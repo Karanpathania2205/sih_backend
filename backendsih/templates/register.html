@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet"  href="{% static 'css/registration.css' %}">
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,9 +11,8 @@
     <title>Registration</title> 
 </head>
 <body>
-    <link rel="stylesheet"  href="{%  static  'css/registration.css'  %}">
     <h1>username</h1> 
-    <p style="color:blue;">this is to check whether css is working in this or not </p>
+    <p>this is to check whether css is working in this or not </p>
     <form  action="" method="post">
         {% csrf_token %}
         <input type="text" name="first_name" placeholder="First Name"><br>
