@@ -20,6 +20,22 @@ from skimage import filters
 from skimage import data
 import sklearn
 from sklearn.cluster import KMeans
+#scene detection 
+from scipy import stats
+import scipy
+import glob 
+import cv2
+import pandas as pd 
+import numpy as np
+from skimage import feature
+from skimage import filters
+from skimage import data
+import sklearn
+from sklearn.cluster import KMeans
+import pandas as pd
+import ast
+import os
+
 #atrribute selection imports
 import torch 
 import torch.nn as nn
@@ -32,12 +48,12 @@ import cv2
 import numpy as np
 import pandas as pd 
 #segmentation imports
-# import pixellib
-# from pixellib.torchbackend.instance import instanceSegmentation
-# from pixellib.semantic import semantic_segmentation
-# import numpy as np
-# import cv2
-# import pytesseract as tr
+import pixellib
+from pixellib.torchbackend.instance import instanceSegmentation
+from pixellib.semantic import semantic_segmentation
+import numpy as np
+import cv2
+import pytesseract as tr
 
 
 def home(request):
@@ -93,6 +109,8 @@ def index(request):
     filePathName=None
     centers=None
     features=None
+    minimum=None
+    index=None
     if request.method == 'POST':
         print (request)
         print (request.POST.dict())
@@ -104,76 +122,193 @@ def index(request):
         image="."+filePathName
         print(image)
 
-        #segmentation 
-
-        #feature extraction
-        path = "/content/drive/MyDrive/SIH/Images2/"
-        #$weights =  models.ResNet50_Weights.DEFAULT
-        model = models.vgg16(pretrained = True)
-
-        model = model.type(torch.cuda.FloatTensor)
-        print(summary(model,(3,256,256)))
-
-        class extract(nn.Module):
-            def __init__(self,model):
-                super(extract,self).__init__()
-                self.features  = list(model.features)
-                self.features = nn.Sequential(*self.features)
-                self.pooling = model.avgpool
-                self.flatten = nn.Flatten()
-                #self.linear = nn.Linear(1,10)
-                self.fc = model.classifier[1]
-
-            def forward(self,input):
-                out = self.features(input)
-                out = self.pooling(out)
-                out = self.flatten(out)
-                out = self.fc(out)
-                return out 
-        #model = models.resnet50(weights = weights)
-
-        updated = extract(model)
-        print(summary(updated,(3,256,256)))
-
-        transform = transforms.Compose([transforms.ToPILImage(),transforms.ToTensor()])
+        #scene detection
+        lst_mean = []
+        lst_centers = []
+        feat = []
         features = []
-        result  = glob.glob(path+"/*.jpg")
-        for i,path1 in enumerate(result):
+        features1 = []
+        lst_centers1 = []
+        lst_distances = []
 
+
+        path = "./media"
+        result = glob.glob(path+'/*.jpg')
+        for j,path1 in enumerate(result):
             image = cv2.imread(path1)
-            image = transform(image)
-            image = image.type(torch.cuda.FloatTensor)
-        #image = image.to(device)
-            #print(type(image))
-        #feature = updated(image)
-            with torch.no_grad():
-                feature = updated(image)
-            features.append(feature.cpu().detach().numpy().reshape(-1))
-        features = np.array(features)
-        with open("/content/drive/MyDrive/SIH/features"+str(i)+".txt",'a') as f:
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+            #image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+            
+            
+            mean  = scipy.mean(image,axis=0)
+            
 
-            f.write(str(features))
-            f.write("\n")
+            
+            mean = mean.tolist()
+            std = scipy.std(image,axis=0)
+            std = std.tolist()
+            
 
-        print(features)
+            skewness = stats.skew(image,axis=0)
+            skewness = skewness.tolist()
+            skewness = np.concatenate((mean,std,skewness),axis= 1)
+            norm_mom = np.linalg.norm(skewness)
+            features1.append(norm_mom)
 
-        #features = features.reshape(1,-1)
-        clust = KMeans(n_clusters = 1,random_state= 0)
-        #features  =features.cpu()
-        clust1 = clust.fit(features)
-        labels = clust1.labels_
-        number = clust1.n_features_in_
-        name = clust1.feature_names_in_
-        print(clust1)
-        print(number)
-        print(name)
-        #labels.to_csv("labels.csv",index = False)
-        #np.savetxt("/content/drive/MyDrive/SIH/labels.txt",labels)
+
+
+
+
+            hue = image[0]
+            saturation  = image[1]
+            meana = scipy.mean(hue,axis = 0)
+            
+
+            stda= scipy.std(hue,axis = 0)
+            #print(std)
+            
+
+            mean1 = scipy.mean(saturation,axis = 0)
+            #print(mean1)
+            
+
+            std1 = scipy.std(saturation,axis = 0)
+            #print(std1)
+
+
+            con = np.concatenate((meana,stda,mean1,std1),axis = 0)
+            #print(con)
+            norm_con = np.linalg.norm(con)
+            features1.append(norm_con)
+            image  = cv2.cvtColor(image,cv2.COLOR_HSV2RGB)
+            can = cv2.Canny(image,100,200)
+            can = np.array(can)
+            norm_can = np.linalg.norm(can)
+
+            features1.append(norm_can)
+
+            gabor  = filters.frangi(image)
+            image = image[:,:,:]
+            print(gabor.shape)
+            df = pd.DataFrame()
+            num = 1
+        
+            for i in range(1,6):
+                i = (i/4)*3.14
+                for h in range(3,9):
+                    for j in range(1,4):
+                        for k in range(1,2):
+
+                            kernel = cv2.getGaborKernel((39,39),h,j,i,k,0,ktype=cv2.CV_32F)
+                            img  = cv2.filter2D(image,cv2.CV_8UC3,kernel)
+                            img = img.reshape(-1)
+                    #	df[Gabor] = img
+                    #	df.to_csv("Gabor.csv")
+                            num = num + 1
+            print(img)
+            gab = np.array(img)
+            gab_norm = np.linalg.norm(gab)
+            features1.append(gab_norm)
+        
+            
+            image = image[:,:,0]
+            mat = feature.graycomatrix(image,[1],[45])
+            tamura = feature.graycoprops(mat,prop = 'contrast')
+            tamura1 = feature.graycoprops(mat,prop = 'dissimilarity')
+            tamura2 = feature.graycoprops(mat,prop = 'homogeneity')
+            #with open("chromatic.txt",'a') as g:
+                #g.write(str(con))
+                #g.write('\n')
+
+
+            arr1= np.concatenate((tamura,tamura1,tamura2),axis = 1)
+            #print(arr.shape)
+            #arr= arr.reshape(arr[0],arr[1]*arr[2])
+
+            #arr = arr.flat()
+            #print(dir(arr))
+            #arr = features.tolist()
+            norm_tam = np.linalg.norm(arr1)
+            #print(norm)
+
+
+            
+            #print(arr)
+            
+            #print(arr.size)
+            
+            #print(arr)
+            features1.append(norm_tam)
+        #print(feat)
+            features2  = np.array(features1)
+            features_mean = np.mean(features2)
+            print(features_mean)
+            with open("features_mean.txt",'a') as h:
+
+                h.write(str(features_mean))
+                h.write('\n')
+        with open("features_mean.txt",'r') as k:
+            for l in k:
+
+            #l= np.array(l)
+        # l= pd.to_numeric(l)
+        #l = np.concatenate(l)
+            #l= pd.to_numeric(l)
+                lst_mean.append(l)
+            lst = [ast.literal_eval(a) for a in lst_mean]
+            print(lst)
+        module_dir = os.path.dirname(__file__)  
+        file_path = os.path.join(module_dir, 'centers.txt')   #full path to text.
+        #data_file = open(file_path , 'r')       
+        #data = data_file.read()
+
+        with open(file_path,'r') as g:
+
+
+
+            for o in g:
+                #o = np.array(o)
+                #o=  o.tolist()
+                o = o.replace('[','')
+                o = o.replace(']','')
+                o = o.strip()
+                #o = pd.to_numeric(o)
+                #dist = np.subtract(l,o)
+                lst_centers.append(o.strip())
+            
+
+            print(lst_centers)
+        #for u in lst_centers:
+        #u = u.replace("'"," ")
+        #lst_centers1.append(u)
+        #print(lst_centers1)
+        lst2 = [ast.literal_eval(t) for t in lst_centers]
+        print(lst2)
+        for d in lst:
+            for y in lst2:
+                dist = np.subtract(d,y)
+                dist =   np.linalg.norm(dist)
+                lst_distances.append(dist)
+                #sorted = np.sort(lst_distances)
+        minimum = np.min(lst_distances)
+        index = lst_distances.index(minimum)
+        print("SCENE BELONGS TO CLUSTER NUMBER"+str(index))
+	
+	
+
+    #dis1 = np.array(dist)
+    #dist = dist.tolist()
+    #
+    
+
+ 
 
 
     context = {
         'filePathName':filePathName,
         'centers':centers,
         'features':features,
+        'minimum':minimum,
+        'index':index,
     }
     return render(request, 'index.html', context)
