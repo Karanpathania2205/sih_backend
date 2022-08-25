@@ -18,6 +18,7 @@ from django.urls import path,include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.conf import settings
+admin.site.site_header = 'Team Gryffindorz Admin Panel'
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',include('imageclassifier.urls'))

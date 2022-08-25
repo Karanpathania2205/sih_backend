@@ -109,6 +109,7 @@ def index(request):
     filePathName=None
     centers=None
     features=None
+    features3=None
     minimum=None
     index=None
     if request.method == 'POST':
@@ -298,7 +299,57 @@ def index(request):
 
     #dis1 = np.array(dist)
     #dist = dist.tolist()
-    #
+
+        #Attribute Selection
+        #path = "./media"
+        #$weights =  models.ResNet50_Weights.DEFAULT
+        model = models.vgg16(pretrained = True)
+
+        model = model.type(torch.cuda.FloatTensor)
+        print(summary(model,(3,256,256)))
+
+        class extract(nn.Module):
+            def __init__(self,model):
+                super(extract,self).__init__()
+                self.features  = list(model.features)
+                self.features = nn.Sequential(*self.features)
+                self.pooling = model.avgpool
+                self.flatten = nn.Flatten()
+                #self.linear = nn.Linear(1,10)
+                self.fc = model.classifier[1]
+
+            def forward(self,input):
+                out = self.features(input)
+                out = self.pooling(out)
+                out = self.flatten(out)
+                out = self.fc(out)
+                return out 
+        #model = models.resnet50(weights = weights)
+
+        updated = extract(model)
+        print(summary(updated,(3,256,256)))
+
+        transform = transforms.Compose([transforms.ToPILImage(),transforms.ToTensor()])
+        features3 = []
+        result  = glob.glob(path+"/*.jpg")
+        for i,path1 in enumerate(result):
+            image = cv2.imread(path1)
+            image = transform(image)
+            image = image.type(torch.cuda.FloatTensor)
+            image = image.unsqueeze(0)
+        #image = image.to(device)
+            #print(type(image))
+        #feature = updated(image)
+            with torch.no_grad():
+                feature4 = updated(image)
+            features3.append(feature4.cpu().detach().numpy().reshape(-1))
+        features3 = np.array(features3)
+        #with open("/content/drive/MyDrive/SIH/features"+str(i)+".txt",'a') as f:
+
+         #   f.write(str(features3))
+          #  f.write("\n")
+
+        print(features3)
     
 
  
@@ -307,7 +358,7 @@ def index(request):
     context = {
         'filePathName':filePathName,
         'centers':centers,
-        'features':features,
+        'features':features3,
         'minimum':minimum,
         'index':index,
     }

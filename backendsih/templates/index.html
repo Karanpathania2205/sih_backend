@@ -80,7 +80,7 @@
                         <input type="submit" value="Submit" ></div>
                     
 
-                    
+                            {%if filePathName is not None%}
                             {% comment %} <h2>The classification of the image is {{predictedLabel}}</h2> {% endcomment %}
                             {% comment %} <img src={{filePathName}} alt='imagename'> {% endcomment %}
                             {% comment %} {{filePathName}} {% endcomment %}
@@ -90,7 +90,7 @@
                             <h1>Scene belongs to the cluster number {{index}}</h1>
                             <br>
                             <h1>The minimum distance is {{minimum}}</h1>
-                        
+                            {%endif%}
                             
                     
                         </form>
